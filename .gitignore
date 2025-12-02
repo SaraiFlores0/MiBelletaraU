@@ -21,6 +21,8 @@ DerivedData
 *.ipa
 *.xcuserstate
 **/.xcode.env.local
+supabaseConfig.local.js
+
 
 # Android/IntelliJ
 #
