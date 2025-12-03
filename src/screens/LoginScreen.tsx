@@ -12,7 +12,7 @@ import { Formik } from 'formik';
 import * as Yup from 'yup';
 import { supabase } from '../services/supabaseClient';
 
-// Acá importamos los ervicios de Biometria
+// Acá importamos los servicios de Biometria
 import {
   requestBiometricAuth,
   checkBiometricSupport,

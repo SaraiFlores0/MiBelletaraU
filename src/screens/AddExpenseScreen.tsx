@@ -117,7 +117,7 @@ const AddExpenseScreen: React.FC<Props> = ({ navigation }) => {
       // 5. Insertar en Supabase
       const { error } = await supabase.from('expenses').insert({
         user_id: session.user.id,
-        // 👇 Ajusta el nombre de la columna según tu tabla (name / description)
+        
         name: values.name.trim(),
         amount: parsedAmount,
         date: isoDate,
@@ -135,8 +135,7 @@ const AddExpenseScreen: React.FC<Props> = ({ navigation }) => {
       setStatusMsg('Gasto registrado correctamente.');
       // limpiamos formulario
       setDate(new Date());
-      // Si quieres mantener el último nombre, comenta el reset de values
-      // (Formik reset lo hace abajo)
+      
     } catch (err: any) {
       console.log('Error inesperado al registrar gasto', err);
       setStatusType('error');
@@ -192,8 +191,7 @@ const AddExpenseScreen: React.FC<Props> = ({ navigation }) => {
             helpers.setSubmitting(true);
             handleSubmitExpense(values).finally(() => {
               helpers.setSubmitting(false);
-              // Si quieres limpiar campos cuando se registra bien:
-              // (solo si fue success, pero para simpleza lo hacemos así)
+              
               helpers.resetForm();
             });
           }}
@@ -213,7 +211,7 @@ const AddExpenseScreen: React.FC<Props> = ({ navigation }) => {
                 <Text style={styles.label}>Nombre del gasto</Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="Ej. Almuerzo UFG"
+                  placeholder="Ej. Almuerzo"
                   placeholderTextColor="#cbd5e1"
                   value={values.name}
                   onChangeText={handleChange('name')}
@@ -261,7 +259,7 @@ const AddExpenseScreen: React.FC<Props> = ({ navigation }) => {
                   mode="date"
                   display={Platform.OS === 'ios' ? 'spinner' : 'default'}
                   onChange={handleChangeDate}
-                  maximumDate={new Date()} // 👈 también lo bloquea desde el calendario
+                  maximumDate={new Date()} 
                 />
               )}
 
