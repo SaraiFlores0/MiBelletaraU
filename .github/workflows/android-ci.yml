@@ -28,13 +28,24 @@ jobs:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
         run: echo "$KEYSTORE_BASE64" | base64 --decode > android/release-keystore.jks
 
-      # 4. Node para ejecutar npm
+      # 4. Crear supabaseConfig.local.js
+      - name: Create Supabase config file
+        run: |
+          cat << EOF > supabaseConfig.local.js
+          export const SUPABASE_URL = '${SUPABASE_URL}';
+          export const SUPABASE_ANON_KEY = '${SUPABASE_ANON_KEY}';
+          EOF
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+
+      # 5. Node para ejecutar npm
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      # 5. Instalar dependencias
+      # 6. Instalar dependencias
       - name: Install dependencies
         run: npm ci
 
