@@ -1,3 +1,4 @@
+// src/screens/RegisterScreen.tsx
 import React, { useState } from 'react';
 import {
   SafeAreaView,
@@ -20,11 +21,24 @@ type RegisterFormValues = {
   fullName: string;
   email: string;
   password: string;
+  confirmPassword: string;
 };
+
+const nameRegex = /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/;
 
 const registerSchema = Yup.object().shape({
   fullName: Yup.string()
     .required('El nombre es obligatorio')
+    .test(
+      'solo-letras',
+      'Solo se permiten letras y espacios',
+      (value) => !value || nameRegex.test(value)
+    )
+    .test(
+      'sin-dobles-espacios',
+      'No uses espacios dobles',
+      (value) => !value || !/\s{2,}/.test(value)
+    )
     .test(
       'nombre-completo',
       'Ingresa nombre y apellido',
@@ -32,14 +46,36 @@ const registerSchema = Yup.object().shape({
         if (!value) return false;
         const partes = value.trim().split(/\s+/);
         return partes.length >= 2;
-      },
+      }
     ),
   email: Yup.string()
     .email('Correo inválido')
     .required('El correo es obligatorio'),
   password: Yup.string()
-    .min(6, 'Mínimo 6 caracteres')
-    .required('La contraseña es obligatoria'),
+    .required('La contraseña es obligatoria')
+    .min(8, 'Mínimo 8 caracteres')
+    .matches(/[A-Za-z]/, 'Debe incluir letras')
+    .matches(/\d/, 'Debe incluir números')
+    .matches(/[^A-Za-z0-9]/, 'Debe incluir al menos un carácter especial')
+    .test(
+      'no-comun',
+      'La contraseña es muy débil, intenta con otra.',
+      (value) => {
+        if (!value) return false;
+        const weak = [
+          '123456',
+          '1234567',
+          '12345678',
+          '123456789',
+          'password',
+          'contraseña',
+        ];
+        return !weak.includes(value);
+      }
+    ),
+  confirmPassword: Yup.string()
+    .required('Confirma tu contraseña')
+    .oneOf([Yup.ref('password')], 'Las contraseñas no coinciden'),
 });
 
 const RegisterScreen: React.FC<Props> = ({ navigation }) => {
@@ -47,9 +83,12 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   const handleRegister = async (
     values: RegisterFormValues,
-    resetForm: () => void,
+    resetForm: () => void
   ) => {
     try {
       setLoading(true);
@@ -74,24 +113,21 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
 
       if (!data.user) {
         setErrorMessage(
-          'Registro no completado. Intenta de nuevo en unos minutos.',
+          'Registro no completado. Intenta de nuevo en unos minutos.'
         );
         setTimeout(() => setErrorMessage(null), 3000);
         return;
       }
 
-      // En este punto la cuenta está creada en Auth.
-      // El perfil en "profiles" se creará automáticamente
-      // en el primer inicio de sesión (LoginScreen).
-
+      // El perfil en "profiles" se creará automáticamente en el primer login.
       setSuccessMessage(
-        'Cuenta creada correctamente 🎉 Ahora puedes iniciar sesión.',
+        'Cuenta creada correctamente 🎉 Ahora puedes iniciar sesión.'
       );
       resetForm();
       setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err: any) {
       setErrorMessage(
-        err?.message ?? 'Ocurrió un error inesperado. Intenta de nuevo.',
+        err?.message ?? 'Ocurrió un error inesperado. Intenta de nuevo.'
       );
       setTimeout(() => setErrorMessage(null), 3000);
     } finally {
@@ -124,7 +160,12 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
         </Text>
 
         <Formik
-          initialValues={{ fullName: '', email: '', password: '' }}
+          initialValues={{
+            fullName: '',
+            email: '',
+            password: '',
+            confirmPassword: '',
+          }}
           validationSchema={registerSchema}
           onSubmit={(values, { resetForm }) =>
             handleRegister(values, resetForm)
@@ -139,6 +180,7 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
             touched,
           }) => (
             <>
+              {/* Nombre */}
               <View style={styles.field}>
                 <Text style={styles.label}>Nombre completo</Text>
                 <TextInput
@@ -158,6 +200,7 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
                 )}
               </View>
 
+              {/* Correo */}
               <View style={styles.field}>
                 <Text style={styles.label}>Correo</Text>
                 <TextInput
@@ -179,23 +222,69 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
                 )}
               </View>
 
+              {/* Contraseña */}
               <View style={styles.field}>
                 <Text style={styles.label}>Contraseña</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="********"
-                  placeholderTextColor="#cbd5e1"
-                  secureTextEntry
-                  value={values.password}
-                  onChangeText={(text) => {
-                    setErrorMessage(null);
-                    setSuccessMessage(null);
-                    handleChange('password')(text);
-                  }}
-                  onBlur={handleBlur('password')}
-                />
+                <View style={styles.passwordWrapper}>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="********"
+                    placeholderTextColor="#cbd5e1"
+                    secureTextEntry={!showPassword}
+                    value={values.password}
+                    onChangeText={(text) => {
+                      setErrorMessage(null);
+                      setSuccessMessage(null);
+                      handleChange('password')(text);
+                    }}
+                    onBlur={handleBlur('password')}
+                  />
+                  <TouchableOpacity
+                    style={styles.toggleSecure}
+                    onPress={() => setShowPassword((prev) => !prev)}
+                  >
+                    <Text style={styles.toggleSecureText}>
+                      {showPassword ? 'Ocultar' : 'Ver'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
                 {touched.password && errors.password && (
                   <Text style={styles.errorText}>{errors.password}</Text>
+                )}
+              </View>
+
+              {/* Confirmar contraseña */}
+              <View style={styles.field}>
+                <Text style={styles.label}>Confirmar contraseña</Text>
+                <View style={styles.passwordWrapper}>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="********"
+                    placeholderTextColor="#cbd5e1"
+                    secureTextEntry={!showConfirmPassword}
+                    value={values.confirmPassword}
+                    onChangeText={(text) => {
+                      setErrorMessage(null);
+                      setSuccessMessage(null);
+                      handleChange('confirmPassword')(text);
+                    }}
+                    onBlur={handleBlur('confirmPassword')}
+                  />
+                  <TouchableOpacity
+                    style={styles.toggleSecure}
+                    onPress={() =>
+                      setShowConfirmPassword((prev) => !prev)
+                    }
+                  >
+                    <Text style={styles.toggleSecureText}>
+                      {showConfirmPassword ? 'Ocultar' : 'Ver'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+                {touched.confirmPassword && errors.confirmPassword && (
+                  <Text style={styles.errorText}>
+                    {errors.confirmPassword}
+                  </Text>
                 )}
               </View>
 
@@ -231,7 +320,9 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
               >
                 <Text style={styles.bottomLinkText}>
                   ¿Ya tienes cuenta?{' '}
-                  <Text style={styles.bottomLinkTextBold}>Inicia sesión</Text>
+                  <Text style={styles.bottomLinkTextBold}>
+                    Inicia sesión
+                  </Text>
                 </Text>
               </TouchableOpacity>
             </>
@@ -324,6 +415,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     color: '#111827',
+    paddingRight: 70, // espacio para el botón Ver/Ocultar
+  },
+  passwordWrapper: {
+    position: 'relative',
+  },
+  toggleSecure: {
+    position: 'absolute',
+    right: 18,
+    top: 0,
+    bottom: 0,
+    justifyContent: 'center',
+  },
+  toggleSecureText: {
+    fontSize: 12,
+    color: '#4f46e5',
+    fontWeight: '600',
   },
   button: {
     marginTop: 8,
