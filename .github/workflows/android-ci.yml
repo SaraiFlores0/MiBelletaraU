@@ -51,3 +51,4 @@ jobs:
         with:
           name: MiBilleteraU-release-apk
           path: android/app/build/outputs/apk/release/app-release.apk
+
