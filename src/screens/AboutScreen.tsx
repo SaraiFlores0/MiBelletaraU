@@ -12,7 +12,7 @@ const AboutScreen: React.FC<Props> = () => {
   return (
     <View style={styles.container}>
       <View style={styles.card}>
-        <Text style={styles.title}>MiBilleteraU</Text>
+        <Text style={styles.title}>Mi Billetera</Text>
         <Text style={styles.version}>Versión {APP_VERSION}</Text>
 
         <Text style={styles.description}>
