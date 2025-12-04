@@ -12,6 +12,13 @@ import { Formik } from 'formik';
 import * as Yup from 'yup';
 import { supabase } from '../services/supabaseClient';
 
+// Acá importamos los servicios de Biometria
+import {
+  requestBiometricAuth,
+  checkBiometricSupport,
+} from '../services/biometricAuth';
+
+
 type Props = {
   navigation: any;
 };
@@ -32,18 +39,19 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  // adaptamos lo necesario el handleLogin para la huella
   const handleLogin = async (values: LoginFormValues) => {
     try {
       setLoading(true);
       setErrorMessage(null);
 
+      // acá autenticamos con supabase
       const { data, error } = await supabase.auth.signInWithPassword({
         email: values.email.trim(),
         password: values.password,
       });
 
       if (error) {
-        // Mensaje bonito en la tarjeta
         setErrorMessage('Correo o contraseña incorrectos.');
         setTimeout(() => setErrorMessage(null), 3000);
         return;
@@ -58,27 +66,38 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
         return;
       }
 
-      // Crear/actualizar perfil en profiles (si no existe)
-      const fullName =
-        (user.user_metadata as any)?.full_name ?? '';
+      // Actualiamos el perfil
+      const fullName = (user.user_metadata as any)?.full_name ?? '';
 
-      await supabase
-        .from('profiles')
-        .upsert(
-          [
-            {
-              id: user.id,
-              full_name: fullName,
-            },
-          ],
-          { onConflict: 'id' },
-        );
+      await supabase.from('profiles').upsert(
+        [
+          {
+            id: user.id,
+            full_name: fullName,
+          },
+        ],
+        { onConflict: 'id' }
+      );
 
-      // Si todo bien, navegar a Home
+      // Acá verificamos si el dispositivo soporta utilizar huella 
+      const canUseBiometrics = await checkBiometricSupport();
+
+      if (canUseBiometrics) {
+        // Acá pedimos auntenticación de huella
+        const biometricSuccess = await requestBiometricAuth();
+
+        if (!biometricSuccess) {
+          setErrorMessage('Autenticación biométrica cancelada.');
+          setLoading(false);
+          return;
+        }
+      }
+
+      // Si todo sale bien, navegamos a home
       navigation.replace('Home');
     } catch (err: any) {
       setErrorMessage(
-        err?.message ?? 'Ocurrió un error inesperado. Intenta de nuevo.',
+        err?.message ?? 'Ocurrió un error inesperado. Intenta de nuevo.'
       );
       setTimeout(() => setErrorMessage(null), 3000);
     } finally {
@@ -105,9 +124,7 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
         </View>
 
         <Text style={styles.title}>Bienvenido de nuevo 👋</Text>
-        <Text style={styles.subtitle}>
-          Inicia sesión para ver tus gastos.
-        </Text>
+        <Text style={styles.subtitle}>Inicia sesión para ver tus gastos.</Text>
 
         <Formik
           initialValues={{ email: '', password: '' }}

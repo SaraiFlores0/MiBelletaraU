@@ -25,7 +25,7 @@ type Expense = {
   user_id: string;
   name: string;
   amount: number;
-  date: string; // ISO string
+  date: string; 
   description?: string | null;
 };
 
@@ -41,7 +41,7 @@ const ExpensesSummaryScreen: React.FC<Props> = ({ navigation }) => {
 
   // Total del mes actual
   const [monthTotal, setMonthTotal] = useState(0);
-  // 👉 Subtotal de lo filtrado (lo que aparece en la lista)
+
   const [filteredTotal, setFilteredTotal] = useState(0);
 
   // Filtros
@@ -96,13 +96,13 @@ const ExpensesSummaryScreen: React.FC<Props> = ({ navigation }) => {
       const currentMonth = now.getMonth();
       const currentYear = now.getFullYear();
 
-      // 🔹 Gastos del mes actual
+      // Gastos del mes actual
       const currentMonthExpenses = expenses.filter(exp => {
         const d = new Date(exp.date);
         return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
       });
 
-      // 🔹 Total del mes actual
+      // Total del mes actual
       const total = currentMonthExpenses.reduce(
         (acc, exp) => acc + Number(exp.amount ?? 0),
         0,
@@ -113,7 +113,7 @@ const ExpensesSummaryScreen: React.FC<Props> = ({ navigation }) => {
       setVisibleExpenses(currentMonthExpenses);
       setMonthTotal(total);
 
-      // 👉 Inicialmente el subtotal filtrado es igual al total del mes (lo que se ve)
+      
       setFilteredTotal(total);
     } catch (err: any) {
       Alert.alert(
@@ -172,7 +172,7 @@ const ExpensesSummaryScreen: React.FC<Props> = ({ navigation }) => {
       });
     }
 
-    // 👉 Subtotal de lo que quedó después de los filtros
+    // Subtotal de lo que quedó después de los filtros
     const subtotal = list.reduce(
       (acc, exp) => acc + Number(exp.amount ?? 0),
       0,
@@ -345,7 +345,7 @@ const ExpensesSummaryScreen: React.FC<Props> = ({ navigation }) => {
           </View>
         </View>
 
-        {/* 👉 Subtotal de lo filtrado */}
+        {/* Subtotal de lo filtrado */}
         <View style={styles.subtotalBox}>
           <Text style={styles.subtotalLabel}>Subtotal de lo filtrado</Text>
           <Text style={styles.subtotalAmount}>
